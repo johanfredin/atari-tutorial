@@ -45,17 +45,17 @@ loop
     bne loop
 
 ; change colors
-    mva #clr_med_gray COLOR0
-    mva #clr_lt_gray COLOR1
-    mva #clr_green COLOR2
-    mva #clr_brown COLOR3
-    mva #clr_black COLOR4
+    mva #clr_med_gray COLOR0    ; %01
+    mva #clr_lt_gray COLOR1     ; %10
+    mva #clr_green COLOR2       ; %11
+    mva #clr_brown COLOR3       ; %11 (inverse)
+    mva #clr_black COLOR4       ; %00
 
     ldy #0
 loop2
     mva scene,y screen,y                                ; same as lda scene, y sta screen, y
     iny
-    cpy #4                                              ; the amount of bytes in our scene
+    cpy #6                                              ; the amount of bytes in our scene
     bne loop2
 
     jmp *
@@ -69,25 +69,23 @@ dlist
     .byte jvb, <dlist, >dlist
 
 scene
-    .byte 1, 2, 129, 130
+    .byte 1, 2, 1, 2, 1, 2
 
 chars
-; left half of a ball
+    .byte %10101010
+    .byte %10100101
+    .byte %01010101
     .byte %00000000
-    .byte %00000001
-    .byte %00000110
-    .byte %00011011
-    .byte %00011011
-    .byte %00000110
-    .byte %00000001
+    .byte %01010010
+    .byte %01010010
+    .byte %01010010
     .byte %00000000
-; right half of a ball
+
+    .byte %01001010
+    .byte %01001010
+    .byte %00001001
     .byte %00000000
-    .byte %01000000
-    .byte %10010000
-    .byte %11100100
-    .byte %11100100
-    .byte %10010000
-    .byte %01000000
+    .byte %10101001
+    .byte %10010101
+    .byte %01010101
     .byte %00000000
- 
