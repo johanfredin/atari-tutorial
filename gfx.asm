@@ -1,6 +1,5 @@
-	org $5000
+	org charset
 
-gfx
 	; char 0
 	.byte %00000000
 	.byte %00000000

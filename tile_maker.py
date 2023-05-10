@@ -12,12 +12,14 @@ pixels = list()
 for row in row_list:
     pixels.append(list(row))
 
+
 colors = ["11", "01", "10", "00", "11"]
+
 
 f = open("gfx.asm", "w")
 char = 0
 #f.write("\t.local gfx\n")
-f.write("\torg $5000\n")
+f.write("\torg charset\n")
 for row in range(int(height / tile_height)):
     for col in range(int(width / tile_width)):
         f.write(f"\t; char {char}\n")
