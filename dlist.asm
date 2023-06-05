@@ -14,7 +14,7 @@ antic5 = 5                  ; Antic mode 5
 
 dlist
     .byte blank8, blank8, blank8                             ; 24(8*3) blank lines
-    .byte antic5 + lms, <screen, >screen                     ; < = left shift, > = right shift
+    .byte antic5 + lms, <canvas, >canvas                     ; < = left shift, > = right shift
     .byte antic5, antic5, antic5, antic5, antic5, antic5
     .byte antic5, antic5, antic5, antic5, antic5
     .byte jvb, <dlist, >dlist

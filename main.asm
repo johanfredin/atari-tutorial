@@ -2,9 +2,10 @@
 
     org $2000                                  ; origin line, tells the assembler where our program will live in memory
 
-screen  = $4000 ; screen buffer
-charset = $5000 ; allocate space for character set, there are 4 pages and each is 256 bytes in size, 
-pmg     = $6000 ; Player Missile Data
+map     = $3000 ; map memory location
+charset = $4000 ; allocate space for character set, there are 4 pages and each is 256 bytes in size, 
+pmg     = $5000 ; Player Missile Data
+canvas  = $6000 ; screen buffer
 
     setup_screen()
     setup_colors()
@@ -12,7 +13,7 @@ pmg     = $6000 ; Player Missile Data
     clear_pgm()
     load_pmg()
     setup_pmg_system()
-    display_map()
+    copy_map_to_canvas()
 
     jmp *
     
@@ -20,6 +21,7 @@ pmg     = $6000 ; Player Missile Data
     icl 'dlist.asm'
     icl 'gfx.asm'
     icl 'pmgdata.asm'
+    icl 'map.asm'
 
 * ----------------------------------------- *
 * Proc setup colors                         *
@@ -113,55 +115,35 @@ loop
     .endp
 
 * ----------------------------------------- *
-* Macro: blit_row                           *
-* Copies one line of map to screen          *
+* Proc: copy_map_to_canvas                  *
+* Copies map to canvas with interpolation   *
 * ----------------------------------------- *
-.macro blit_row map, screen
-    ldx #0
+.proc copy_map_to_canvas
+map_ptr = $92               ; zero page location (faster instructions )
+                            ; locations $92 - $CA (146 - 202) are reserved
+                            ; for the 8K BASIC ROM on the real machine, but 
+                            ; we dont care about that so we can just write over it
+canvas_ptr = $94
+    mwa #map map_ptr
+    mwa #canvas canvas_ptr
+
     ldy #0
 loop
-    lda :map,x
-    asl                 ; asl = (arithmetic shift left) shift left 1 step e.g multiplying by 2
-    sta :screen,y 
+    lda (map_ptr), y        ; () = indirect reference meaning whatever map_ptr is pointing to, grab it. same as pointer dereferencing in c (i think)
+    asl 
+    sta (canvas_ptr), y
+    inc canvas_ptr          ; inc = increments a zero page pointer by 1
+    bne next                ; bne without a cmp before means branch if != 0
+    inc canvas_ptr + 1
+next
+    add #1                  ; macro that does clc and adc #1
+    sta (canvas_ptr), y
     iny
-    clc
-    adc #1
-    sta :screen,y
-    iny
-    inx
-    cpx #20
     bne loop
-    .endm 
-
-* ----------------------------------------- *
-* Proc: display map                         *
-* Displays the current map                  *
-* ----------------------------------------- *
-.proc display_map
-    blit_row map, screen
-    blit_row map+20, screen+40
-    blit_row map+40, screen+80
-    blit_row map+60, screen+120
-    blit_row map+80, screen+160
-    blit_row map+100, screen+200
-    blit_row map+120, screen+240
-    blit_row map+140, screen+280
-    blit_row map+160, screen+320
-    blit_row map+180, screen+360
-    blit_row map+200, screen+400
-    blit_row map+220, screen+440
+    inc map_ptr + 1
+    inc canvas_ptr + 1
+    lda map_ptr + 1
+    cmp #>(map + $1000)     ; make sure we dont go out of our 4k memory bounds
+    bne loop    
     rts
-map
-    .byte 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
-    .byte 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1
-    .byte 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1
-    .byte 1, 2, 2, 3, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1
-    .byte 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 3, 2, 2, 2, 1, 2, 2, 2, 1
-    .byte 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1
-    .byte 1, 2, 2, 1, 2, 2, 2, 3, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1
-    .byte 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 3, 1, 1
-    .byte 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 2, 1
-    .byte 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 5, 2, 1
-    .byte 1, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 2, 2, 2, 1, 1, 2, 2, 1
-    .byte 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
     .endp
